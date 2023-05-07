@@ -135,16 +135,6 @@ class PreTrainedModel:
         self.g_tol, self.g_sf, self.g_metal_2nn = get_graph_conversion_params(
             self.model_path
         )
-        # Model info
-        # self.num_parameters = sum(p.numel() for p in self.model.parameters())
-
-        # param_size, buffer_size = 0, 0
-        # for param in self.model.parameters():
-        #     param_size += param.nelement() * param.element_size()
-        # for buffer in self.model.buffers():
-        #     buffer_size += buffer.nelement() * buffer.element_size()
-
-        # self.size_all_mb = (param_size + buffer_size) / 1024**2
 
     def __repr__(self) -> str:
         string = "GNN pretrained model for DFT ground state energy prediction."

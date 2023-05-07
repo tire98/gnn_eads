@@ -20,6 +20,7 @@ from networkx import (
 from pymatgen.core.structure import Molecule
 from pymatgen.io.babel import BabelMolAdaptor
 from rdkit import Chem
+from rdkit.Chem import rdDetermineBonds
 from scipy.spatial import Voronoi
 from sklearn.preprocessing import LabelBinarizer, OneHotEncoder
 from torch import Tensor
@@ -215,18 +216,17 @@ def atoms_to_mol(
     with tempfile.NamedTemporaryFile(mode="w", suffix=".mol", delete=True) as temp:
         pmg_mol.to(filename=temp.name, fmt="mol")
         rdkit_mol = Chem.MolFromMolFile(temp.name, removeHs=False, sanitize=False)
-    # rdDetermineBonds.DetermineConnectivity(rdkit_mol)
     Chem.SanitizeMol(
         rdkit_mol, Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION
     )
-    if relax:
-        rdDetermineBonds.DetermineBondOrders(rdkit_mol)
-        Chem.SanitizeMol(
-            rdkit_mol,
-            Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION,
-            Chem.SANITIZE_SETAROMATICITY,
-        )
-        Chem.SetAromaticity(rdkit_mol, Chem.AromaticityModel.AROMATICITY_SIMPLE)
+    # if relax:
+    #     rdDetermineBonds.DetermineBondOrders(rdkit_mol)
+    #     Chem.SanitizeMol(
+    #         rdkit_mol,
+    #         Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION,
+    #         Chem.SANITIZE_SETAROMATICITY,
+    #     )
+    #     Chem.SetAromaticity(rdkit_mol, Chem.AromaticityModel.AROMATICITY_SIMPLE)
 
     return rdkit_mol
 
@@ -419,23 +419,6 @@ class Featurizer:
         self.num_el = num_el  # radical feature with number of electrons (true) or one-hot encoding (false)
         self.second_order = second_order
 
-    def get_degree_array(atom_array):
-        """Get the degree of unsaturation of each atom
-
-        Args:
-            atom_array ([[Chem.Atoms]]): Array of rdkit atom objects
-
-        Returns:
-            np.array: array of degrees of unsaturation
-        """
-        degree_vector = np.vectorize(lambda x: x.GetDegree())
-        max_degree_vector = np.vectorize(
-            lambda x: Chem.GetPeriodicTable().GetDefaultValence(x.GetAtomicNum())
-        )
-        degree_array = max_degree_vector(atom_array) - degree_vector(atom_array)
-        degree_array = degree_array.reshape(-1, 1)
-        return degree_array
-
     def featurize(self) -> Tensor:
         """Featurise atoms of a molecule with electronic state indices
             and OneHot encoding
@@ -493,7 +476,22 @@ class Featurizer:
                     (aromaticity_array, zero_array), axis=0
                 )
                 features = np.concatenate((features, aromaticity_array), axis=1)
+            def get_degree_array(atom_array):
+                """Get the degree of unsaturation of each atom
 
+                Args:
+                    atom_array ([[Chem.Atoms]]): Array of rdkit atom objects
+
+                Returns:
+                    np.array: array of degrees of unsaturation
+                """
+                degree_vector = np.vectorize(lambda x: x.GetDegree())
+                max_degree_vector = np.vectorize(
+                    lambda x: Chem.GetPeriodicTable().GetDefaultValence(x.GetAtomicNum())
+                )
+                degree_array = max_degree_vector(atom_array) - degree_vector(atom_array)
+                degree_array = degree_array.reshape(-1, 1)
+                return degree_array
             if self.radical:
                 radical_connect_array = get_degree_array(atom_array_connect)
                 zero_array = np.zeros(

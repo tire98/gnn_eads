@@ -1,15 +1,15 @@
 """Functions for graphs handling and visualization purposes."""
 
-from gnn_eads.core.constants import rgb_colors
-import numpy as np
+import matplotlib.pyplot as plt
 import networkx
+import numpy as np
 import torch
 import torch_geometric
 from torch_geometric.data import Data
-import matplotlib.pyplot as plt
 
-from gnn_eads.constants import FULL_ELEM_LIST, MOL_ELEM, ENCODER, ELEMENT_LIST, METALS
-from gnn_eads.functions import get_graph_formula
+from gnn_eads.core.constants import (ELEMENT_LIST, ENCODER, FULL_ELEM_LIST,
+                                     METALS, MOL_ELEM, rgb_colors)
+from gnn_eads.core.functions import get_graph_formula
 
 
 def convert_gpytorch_to_networkx(graph: Data) -> networkx.Graph:
@@ -32,7 +32,7 @@ def convert_gpytorch_to_networkx(graph: Data) -> networkx.Graph:
     connections = list(g.edges)
     nx_graph = networkx.DiGraph()
     for i in range(n_nodes):
-        nx_graph.add_node(i, atom=atom_list[i], rgb=rgb_colors[atom_list[i]])
+        nx_graph.add_node(i, element=atom_list[i], rgb=rgb_colors[atom_list[i]])
     nx_graph.add_edges_from(connections, minlen=2)
     return nx_graph
 
