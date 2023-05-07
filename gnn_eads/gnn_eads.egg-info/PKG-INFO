@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: gnn-eads
+Version: 1.0.0
+Summary: Module for the developement of graph neural networks for the prediction of adsorption energies.
+Author: Tim Renningholtz
+Author-email: trenningholtz@iciq.es
