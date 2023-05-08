@@ -119,6 +119,7 @@ class PreTrainedModel:
                 - performance.txt: the model performance and settings
         """
         self.model_path = model_path
+        print('model_path: ', model_path)
         self.model = torch.load(
             "{}/model.pth".format(self.model_path), map_location=torch.device("cpu")
         )

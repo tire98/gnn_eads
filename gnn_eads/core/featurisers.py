@@ -90,16 +90,7 @@ def get_surf_atoms(
     return Atoms(atoms[[*indexes, *metal_neighbours]], pbc=atoms.pbc, cell=atoms.cell)
 
 
-def wrap_adsorbate(adsorbate: Atoms) -> Atoms:
-    """Move adsorbate which is split due to pbc to the centre of the cell.
-
-    Args:
-        adsorbate (Atoms): Atoms object of adsorbate
-
-    Returns:
-        Atoms: Atoms object with new positions
-    """
-    #  move adsorbate which is split due to pbc to the centre of the cell
+def wrap_adsorbate(adsorbate):
     ads = adsorbate.copy()
     ads_g = Atoms(ads.get_chemical_symbols(), ads.get_positions(), cell=ads.cell)
     ads_graph = atoms_to_graph(ads_g, 1.5, 0.5)
@@ -110,7 +101,6 @@ def wrap_adsorbate(adsorbate: Atoms) -> Atoms:
     ads.wrap(center=(0.5, 0.5, 0.5), pbc=[True, True, True], pretty_translation=False)
     count = 1
     count_ = 1
-    # many trial and errors to find the right translation; this is not a general solution
     while True:
         ads_g = Atoms(ads.get_chemical_symbols(), ads.get_positions(), cell=ads.cell)
         ads_graph = atoms_to_graph(ads_g, 1.5, 0.5)
@@ -183,11 +173,7 @@ def wrap_adsorbate(adsorbate: Atoms) -> Atoms:
     return ads
 
 
-def atoms_to_mol(
-    atoms: Atoms,
-    relax: bool,
-    bond_order: bool = False,
-):  # -> RDKitMol:
+def atoms_to_mol(atoms: Atoms, relax: bool, bond_order: bool = False):  # -> RDKitMol:
     """Convert atoms object to rdkit mol object via temporary .pdb file.
 
     Args:
@@ -206,7 +192,7 @@ def atoms_to_mol(
     ob_mol = BabelMolAdaptor(pmg_struct)
 
     # this object can be optimized with the "mmff94" force field
-    # this is necessary to correct distortions from adsorption; rdkit featurisation relies and relaxed gas phase geometry; only needed for aromaticity detection
+    # this is necessary to correct distortions from adsorption; rdkit featurisation relies and relaxed gas phase geometry
     if relax:
         ob_mol.localopt(forcefield="mmff94", steps=3000)
     # convert back to pymatgen molecule object and then to rdkit molecule object
@@ -216,18 +202,13 @@ def atoms_to_mol(
     with tempfile.NamedTemporaryFile(mode="w", suffix=".mol", delete=True) as temp:
         pmg_mol.to(filename=temp.name, fmt="mol")
         rdkit_mol = Chem.MolFromMolFile(temp.name, removeHs=False, sanitize=False)
-    Chem.SanitizeMol(
-        rdkit_mol, Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION
-    )
-    # if relax:
-    #     rdDetermineBonds.DetermineBondOrders(rdkit_mol)
-    #     Chem.SanitizeMol(
-    #         rdkit_mol,
-    #         Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION,
-    #         Chem.SANITIZE_SETAROMATICITY,
-    #     )
-    #     Chem.SetAromaticity(rdkit_mol, Chem.AromaticityModel.AROMATICITY_SIMPLE)
+    # rdDetermineBonds.DetermineConnectivity(rdkit_mol)
+    # rdDetermineBonds.DetermineBondOrders(rdkit_mol)
+    Chem.SanitizeMol(rdkit_mol, Chem.SANITIZE_FINDRADICALS ^ Chem.SANITIZE_SETHYBRIDIZATION)
 
+    # Chem.SetAromaticity(rdkit_mol, Chem.AromaticityModel.AROMATICITY_SIMPLE)
+    # sanitize mol object to recognise aromaticity and radicals
+    # set aromaticity and conjugation; other ArromaticityModel options are available
     return rdkit_mol
 
 
@@ -447,9 +428,7 @@ class Featurizer:
         if any([self.ring, self.aromatic, self.radical]):
             # get rdkit mol object
             rdkit_mol_connect = atoms_to_mol(self.atoms_frag, relax=self.relax)
-            atom_array_connect = np.array(
-                [i for i in rdkit_mol_connect.GetAtoms()]
-            ).reshape(-1, 1)
+            atom_array_connect = np.array([i for i in rdkit_mol_connect.GetAtoms()]).reshape(-1, 1)
             # Instantiate OneHotEncoder for True/False features
             true_false_encoder = LabelBinarizer()
             true_false_encoder.fit(np.array([[False], [True]]).reshape(-1, 1))
@@ -476,37 +455,34 @@ class Featurizer:
                     (aromaticity_array, zero_array), axis=0
                 )
                 features = np.concatenate((features, aromaticity_array), axis=1)
+
+            # add radical feature
+            def get_radical_array(atom_array):
+                rad_vector = np.vectorize(lambda x: x.GetNumRadicalElectrons())
+                rad_array = rad_vector(atom_array)
+                rad_array = rad_array.reshape(-1, 1)
+                return rad_array
             def get_degree_array(atom_array):
-                """Get the degree of unsaturation of each atom
-
-                Args:
-                    atom_array ([[Chem.Atoms]]): Array of rdkit atom objects
-
-                Returns:
-                    np.array: array of degrees of unsaturation
-                """
                 degree_vector = np.vectorize(lambda x: x.GetDegree())
-                max_degree_vector = np.vectorize(
-                    lambda x: Chem.GetPeriodicTable().GetDefaultValence(x.GetAtomicNum())
-                )
+                max_degree_vector = np.vectorize(lambda x: Chem.GetPeriodicTable().GetDefaultValence(x.GetAtomicNum()))
                 degree_array = max_degree_vector(atom_array) - degree_vector(atom_array)
                 degree_array = degree_array.reshape(-1, 1)
                 return degree_array
+       
             if self.radical:
                 radical_connect_array = get_degree_array(atom_array_connect)
                 zero_array = np.zeros(
                     (features.shape[0] - len(self.atoms_frag), 1), dtype=int
                 )
-                self.radical_connect_array = np.concatenate(
-                    (radical_connect_array, zero_array), axis=0
-                )
+                self.radical_connect_array = np.concatenate((radical_connect_array, zero_array), axis=0)
                 radical_connect_array = copy.deepcopy(self.radical_connect_array)
-                # one-hot encoding of radical feature
+                # set radical array to 0
                 if self.num_el is False:
                     radical_connect_array[radical_connect_array > 0] = 1
                 features = np.concatenate((features, radical_connect_array), axis=1)
-
+                
                 self.features = torch.tensor(features, dtype=torch.float)
+                    
 
         return self.features
 
@@ -539,6 +515,11 @@ class Featurizer:
                     and G1.nodes[neighbour]["element"] in metals
                 ):
                     G1[node][neighbour]["edge_feat"] = "frag-surf"
+                # if (
+                #     G1.nodes[node]["element"] == "H"
+                #     and G1.nodes[neighbour]["element"] in metals
+                # ):
+                #     G1[node][neighbour]["edge_feat"] = "hydr-surf"
                 if (
                     G1.nodes[node]["element"] in frag_elem
                     and G1.nodes[neighbour]["element"] in frag_elem
@@ -554,22 +535,30 @@ class Featurizer:
         edge_attr = get_edge_attributes(G1, "edge_feat")
         # find edge attribute for each pair in edge_index in coo format
         edge_index = self.get_edge_index()
+        # use key error for edge_attr dict to create edge_attr_1
         # create 1d empty array
         edge_attr_1 = np.array([])
         for i in range(edge_index.shape[1]):
-            feature = np.array(
-                [edge_attr[(edge_index[1][i].item(), edge_index[0][i].item())]]
-            )
-
+            try:
+                feature = np.array(
+                    [edge_attr[(edge_index[0][i].item(), edge_index[1][i].item())]]
+                )
+            except KeyError:
+                try:
+                    feature = np.array(
+                        [edge_attr[(edge_index[1][i].item(), edge_index[0][i].item())]]
+                    )
+                except KeyError:
+                    feature = np.array(["unsaturated"])
             # extend edge_attr_1 with feature
             edge_attr_1 = np.append(edge_attr_1, feature)
         edge_attr_1 = edge_attr_1.reshape(-1, 1)
 
         # OneHot encoding of edge features
         edge_enc = OneHotEncoder()
-        edge_enc_arr = np.array(["frag-surf", "frag-frag"]).reshape(-1, 1)
+        edge_enc_arr = np.array(["frag-surf", "frag-frag", "unsaturated"]).reshape(-1, 1)
         if self.second_order:
-            edge_enc_arr = np.array(["frag-surf", "frag-frag", "metal-metal"]).reshape(
+            edge_enc_arr = np.array(["frag-surf", "frag-frag", "unsaturated", "metal-metal"]).reshape(
                 -1, 1
             )
         edge_enc.fit(edge_enc_arr)
