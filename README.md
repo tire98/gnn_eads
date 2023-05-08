@@ -24,8 +24,7 @@ These instructions will get you a copy of the project up and running on your loc
 4. Install ray from source. Execute the following command in the terminal using pip.
 `pip install ray`
 5. Install the gnn_eads package. Execute the following commands in the terminal using conda.
-- `conda install conda-build`
-- `conda develop .`
+`conda develop .`
 
 # Usage
 The code can be used for two purposes:
