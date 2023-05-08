@@ -1,12 +1,11 @@
 # Fast estimation of adsorption energies of open- and closed-shell molecules on metal surfaces using Graph Neural Networks
 # About
-This repository contains the code for the Master Thesis *Graph Neural Networks for the fast estimation of the adsorption energy of open- and closed-shell molecules on metal catalysts* which was used to train the models and generate the results. The work extends the current [GAME-Net model] (https://doi.org/10.1038/s43588-023-00437-y) and allows for the prediction of adsorption energies of open- and closed-shell fragments on 14 metal surfaces. The following systems are supported:
-- Open- and closed-shell molecules containing C, H, O, N and S.
-- Mentioned molecules adsorbed on 14 transition metals: Ag, Au, Cd, Co, Cu, Fe, Ir, Ni, Os, Pd, Pt, Rh, Ru, and Zn.
- The repository is structured as follows:
+This repository contains the code for the Master Thesis *Graph Neural Networks for the fast estimation of the adsorption energy of open- and closed-shell molecules on metal catalysts* which was used to train the models and generate the results. The work extends the current [GAME-Net model] (https://doi.org/10.1038/s43588-023-00437-y) and allows for the prediction of adsorption energies of open- and closed-shell fragments on 14 metal surfaces. 
+ The repository is structured as follows
 - `gnn_eads`: Python package containing the code and data used for the training the models, and the trained models.
-- `notebooks`: Jupyter notebooks used for the analysis of the results.
 - `scripts`: Python scripts used for running various tasks.
+- `requirements.txt`: File containing the required packages to run the code.
+This repository does not contain any data or trained models and is only used to provide the code used for the training and inference of the models. The following instructions will explain how the code was used to train the models and generate the results.
 # Getting started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. The instructions are for Linux systems and have been tested on Ubuntu 20.04.6 LTS. Windows users can use the [Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) (WSL) to run the code. The code has not been tested on macOS.
 
@@ -86,14 +85,10 @@ The columns concerning the
 ### Node features
 Currently, the graph representation can encode the following features for the adsorbate atoms in addition to the one-hot encoded atom type:
 - degree of unsaturation. The maximum valence from `rdkit` is used to calculate the degree of unsaturation.
-- aromaticity. The aromaticity is calculated using the `rdkit` implementation.
-- cyclicity. The non-aromatic rings are identified using the `rdkit` implementation.
+- aromaticity. The aromaticity is calculated using the `rdkit` implementation. This feature is not used in the current implementation and might not work properly.
+- cyclicity. The non-aromatic rings are identified using the `rdkit` implementation. This feature is not used in the current implementation and might not work properly.
 ### Edge features
 Edge features can be added as well, but are currently not used and might not work properly. The GraphSAGE implementation does not support edge features and the GATv2 needs to be used instead. However, initial trials suggest that the GATv2 implementation performs worse than GraphSAGE. The MAE are higher and the training time is longer. The edge features distinguish between the following types of edges:
 - fragment-fragment bonds
 - metal-fragment bonds
 
-# Authors 
-- Santiago Morandi, doctoral researcher, Núria López group (ICIQ, Spain), NCCR Catalysis member.
-- Sergio Pablo-García, postdoctoral researcher, The Matter Lab, Alán Aspuru-Guzik group (University of Toronto, Canada).
-- Tim Renningholtz, master student at Universität Leipzig and Erasmus+ visiting student, Núria López group (ICIQ, Spain).
