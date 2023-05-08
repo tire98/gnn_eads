@@ -52,6 +52,4 @@ bias_conv = false
 bias_dense = false                                                                     
 bias_adj = false  
 
-[data]
 
-root = "../../../data/FG_BM_RAD_dataset"

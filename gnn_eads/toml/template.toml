@@ -2,22 +2,22 @@
 
 [graph]
 
-voronoi_tol = 0.5        # Applied to all pairs of elements
-scaling_factor = 1.5      # For atomic radii of metals
-second_order = false    # Whether to comprise also the NNs of the metals direclt interacting with the adsorbate
-edge_features = false
-aromatic_features = false
-ring_features = false
-radical_features = false
-relax = false
-num_el = false
-write_db = false
-family= ["radicals"]
+voronoi_tol = 0.5               # Applied to all pairs of elements
+scaling_factor = 1.5            # For atomic radii of metals
+second_order = false            # Whether to comprise also the NNs of the metals direclt interacting with the adsorbate
+edge_features = false           # Whether to include edge features
+aromatic_features = false       # Whether to include aromatic features
+ring_features = false           # Whether to include ring features
+radical_features = true        # Whether to include radical features
+relax = false                   # Whether to relax the structure for feature extraction; important for aromaticity
+num_el = true                  # Whether to include the number of radical or use one hot encoding
+write_db = false                # Whether filtered database should be written
+family= ["radicals"] # list of families which are used for training; family key must be present in database
 
 [train]  # Training related: All hyperparams except architecture-related ones
 
-splits = 10                  # Initial splits of the starting dataset for train/val/test sets creation
-test_set = true             # whether generate test set or just split among train/val
+splits = 10                      # Initial splits of the starting dataset for train/val/test sets creation
+test_set = true                  # whether generate test set or just split among train/val
 batch_size = 16
 epochs = 200
 target_scaling = "std"      # Target scaling approach ("std" only available for now)
@@ -39,19 +39,15 @@ bias = false                # Whether allowing bias in all layer formulas
 n_linear = 0                # Number of fully connected layers
 n_conv = 3                  # Number of convolutional layers
 conv_layer = "SAGE"         # Convolutional layer
-adj_conv = false             # Whether adjust convolutional layer with fully connected one just before
+adj_conv = false            # Whether adjust convolutional layer with fully connected one just before
 conv_normalize = false
 conv_root_weight = true
 pool_layer = "GMT"          # Pooling layer
 pool_ratio = 0.25           # Poling ratio params for GMT
-pool_heads = 1
+pool_heads = 1              # Number of heads for GMT                 
 pool_seq = "1"
 pool_layer_norm = false
 bias_input = true                                                                      
 bias_conv = false                                                                      
 bias_dense = false                                                                     
-bias_adj = false  
-
-[data]
-
-root = "../../../data/FG_BM_RAD_dataset"
+bias_adj = false 

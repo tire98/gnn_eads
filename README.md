@@ -69,17 +69,17 @@ The following options are available:
 
 ## Database generation
 You can either train your own models on the provided data, or create your own dataset which needs to be saved in form of an `ase` database in `gnn_eads/data`. The database should contain the following keys:
-`metal`: The metal symbol.	
-`family`: The family the adsorbate belongs to, e.g., aromatic, cylic, alcohol, etc.
-`eads`: The target adsorption energy (in eV).
-`e_tot`: The total energy of the adsorbate-metal system (in eV).
-`c_atoms`: The number of carbon atoms in the adsorbate.
-`h_atoms`: The number of hydrogen atoms in the adsorbate.
-`o_atoms`: The number of oxygen atoms in the adsorbate.
-`n_atoms`: The number of nitrogen atoms in the adsorbate.
-`s_atoms`: The number of sulphur atoms in the adsorbate.
-`m_metal`: The number of metal atoms in the slab.
-`e_gas`: The total energy of the gas phase adsorbate (in eV).
+- `metal`: The metal symbol.	
+- `family`: The family the adsorbate belongs to, e.g., aromatic, cylic, alcohol, etc.
+- `eads`: The target adsorption energy (in eV).
+- `e_tot`: The total energy of the adsorbate-metal system (in eV).
+- `c_atoms`: The number of carbon atoms in the adsorbate.
+- `h_atoms`: The number of hydrogen atoms in the adsorbate.
+- `o_atoms`: The number of oxygen atoms in the adsorbate.
+- `n_atoms`: The number of nitrogen atoms in the adsorbate.
+- `s_atoms`: The number of sulphur atoms in the adsorbate.
+- `m_metal`: The number of metal atoms in the slab.
+- `e_gas`: The total energy of the gas phase adsorbate (in eV).
 The database can be generated using the provided script `scripts/vasp_out_to_database.py` which converts VASP ouput files to the required format. However, this script is only suitable for metal surfaces presented in the work, unless the column `e_ads`gets updated with the correct values after database generation. 
 The columns concerning the 
 
